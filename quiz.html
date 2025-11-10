@@ -1,0 +1,744 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tester — Quiz</title>
+  <style>
+    :root {
+      --bg: #0d1b12;
+      --panel: #0f2217;
+      --muted: #a3b1a8;
+      --text: #e6f2ea;
+      --primary: #16a34a;
+      --primary-700: #15803d;
+      --danger: #dc2626;
+      --warning: #f59e0b;
+      --border: #13311f;
+      --chip: #0a1a12;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: radial-gradient(1200px 600px at 20% -10%, #173024 0%, #0c1b13 40%, #0a1711 60%, var(--bg) 100%); color: var(--text); font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji"; min-height: 100vh; }
+    .container { max-width: 980px; margin: 0 auto; padding: 24px 16px 64px; }
+    header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin: 8px 0 20px 0; }
+    .title { display: flex; align-items: center; gap: 14px; }
+    .badge { background: linear-gradient(180deg, #0d2918, #0c2315); border: 1px solid #184a2a; color: #bbf7d0; padding: 8px 12px; border-radius: 999px; font-weight: 700; letter-spacing: 0.2px; box-shadow: 0 0 0 1px rgba(22,163,74,0.15) inset, 0 8px 30px rgba(22,163,74,0.08); }
+    .subtle { color: var(--muted); font-size: 14px; }
+    .panel { background: linear-gradient(180deg, rgba(18,36,26,0.9), rgba(12,23,17,0.9)); border: 1px solid var(--border); border-radius: 16px; padding: 16px; box-shadow: 0 0 0 1px rgba(22,163,74,0.08) inset, 0 20px 60px rgba(0,0,0,0.35), 0 2px 8px rgba(0,0,0,0.2); backdrop-filter: blur(6px); }
+    .row { display: grid; grid-template-columns: 1fr; gap: 16px; }
+    @media (min-width: 980px) { .row { grid-template-columns: 1fr 310px; align-items: start; } }
+    .progress-wrap { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 14px; }
+    .progress { position: relative; width: 100%; height: 12px; background: #0a1a12; border-radius: 999px; border: 1px solid #173c25; overflow: hidden; }
+    .progress > .bar { position: absolute; top: 0; left: 0; height: 100%; width: 0%; background: linear-gradient(90deg, rgba(34,197,94,0.25), rgba(34,197,94,0.7)); box-shadow: 0 0 0 1px rgba(22,163,74,0.25) inset, 0 6px 20px rgba(34,197,94,0.35); transition: width 200ms ease; }
+    .stat-chips { display: flex; gap: 10px; flex-wrap: wrap; }
+    .chip { background: var(--chip); border: 1px solid var(--border); color: var(--text); padding: 8px 10px; border-radius: 10px; font-size: 13px; display: inline-flex; align-items: center; gap: 8px; }
+    .chip .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+    .chip.success .dot { background: #16a34a; }
+    .chip.warn .dot { background: var(--warning); }
+    .chip.info .dot { background: var(--primary); }
+    .timer { font-variant-numeric: tabular-nums; font-weight: 700; color: #bbf7d0; }
+    .question { display: grid; gap: 14px; }
+    .q-header { display: flex; align-items: start; justify-content: space-between; gap: 12px; }
+    .q-index { font-weight: 700; color: #bbf7d0; letter-spacing: 0.2px; }
+    .q-text { font-size: 18px; line-height: 1.45; }
+    .options { display: grid; gap: 10px; margin-top: 4px; }
+    .option { display: flex; gap: 12px; align-items: start; padding: 12px; border: 1px solid var(--border); border-radius: 12px; background: #0c1f15; cursor: pointer; transition: transform 120ms ease, border-color 200ms ease, background 200ms ease; user-select: none; }
+    .option:hover { transform: translateY(-1px); border-color: #205735; }
+    .option input { margin-top: 2px; }
+    .option.selected { border-color: var(--primary); background: #0e2619; }
+    .option.correct { border-color: rgba(22,163,74,0.8); background: #0c2717; }
+    .option.wrong { border-color: rgba(220,38,38,0.8); background: #271010; }
+    .nav { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 8px; }
+    .btn { padding: 10px 14px; border-radius: 10px; border: 1px solid #204b30; background: #0c1f15; color: var(--text); cursor: pointer; font-weight: 600; }
+    .btn.primary { background: linear-gradient(180deg, var(--primary), var(--primary-700)); border: 1px solid #1b5e34; color: white; box-shadow: 0 8px 24px rgba(21,128,61,0.35); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .grid-small { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+    .pill { text-align: center; padding: 8px; border-radius: 10px; border: 1px solid var(--border); background: #0c1f15; color: var(--text); font-variant-numeric: tabular-nums; }
+    .review-grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 8px; }
+    .review-item { text-align: center; padding: 8px 0; border-radius: 10px; border: 1px solid var(--border); background: #0c1f15; color: var(--text); cursor: pointer; user-select: none; }
+    .review-item.answered { border-color: var(--primary); background: #0e2619; }
+    .review-item.current { outline: 2px solid var(--primary); }
+    .summary { display: grid; gap: 12px; }
+    .score { font-size: 28px; font-weight: 800; letter-spacing: 0.2px; }
+    .muted { color: var(--muted); }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="title">
+        <div class="badge" id="siteBadge">Tester</div>
+        <div class="subtle" id="contextLine">Loading…</div>
+      </div>
+      <div class="stat-chips">
+        <div class="chip"><span class="dot"></span><span id="progressText">—</span></div>
+        <div class="chip info"><span class="dot"></span>Time left: <span class="timer" id="timeLeft">60:00</span></div>
+        <div class="chip"><span class="dot"></span>Elapsed: <span class="timer" id="timeElapsed">00:00</span></div>
+      </div>
+    </header>
+
+    <div class="panel" style="margin-bottom: 16px;">
+      <div class="progress-wrap">
+        <div class="progress"><div id="progressBar" class="bar" style="width:0%"></div></div>
+        <div class="subtle" id="progressPct">0%</div>
+      </div>
+    </div>
+
+    <div class="row">
+      <main class="panel">
+        <div id="questionView" class="question"></div>
+        <div class="nav">
+          <div style="display:flex; gap:8px;">
+            <button id="prevBtn" class="btn">Previous</button>
+            <button id="nextBtn" class="btn">Next</button>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <button id="finishBtn" class="btn primary">Submit</button>
+          </div>
+        </div>
+      </main>
+
+      <aside class="panel">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+          <div class="subtle">Review / Jump to question</div>
+          <div class="pill" id="currentIndexPill">—</div>
+        </div>
+        <div id="reviewGrid" class="review-grid"></div>
+        <div style="margin-top:14px; display:grid; gap:10px;">
+          <div class="grid-small">
+            <div class="pill"><strong id="answeredCount">—</strong> answered</div>
+            <div class="pill"><strong id="unansweredCount">—</strong> open</div>
+            <div class="pill"><strong id="remainingTimePill">60:00</strong> left</div>
+            <div class="pill"><strong id="elapsedTimePill">00:00</strong> elapsed</div>
+            <div class="pill"><strong id="estCompletePill">—</strong> ETA</div>
+          </div>
+          <a class="btn" href="index.html">← Back to Home</a>
+        </div>
+      </aside>
+    </div>
+
+    <div id="summaryPanel" class="panel hidden" style="margin-top:16px;">
+      <div class="summary">
+        <div class="score" id="scoreLine">Your score: —</div>
+        <div class="subtle">Time used: <span id="summaryElapsed">—</span></div>
+        <div id="detailedResults"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let TOTAL_QUESTIONS = 50; // will be set to dataset length
+    const TOTAL_SECONDS = 60 * 60;
+
+    function qs(name) {
+      const p = new URLSearchParams(location.search);
+      return p.get(name) || "";
+    }
+    const category = decodeURIComponent(qs("c") || "General");
+    const paper = decodeURIComponent(qs("p") || "Practice");
+    document.title = "Tester — " + category + " / " + paper;
+    document.getElementById("contextLine").textContent = category + " • " + paper;
+
+    const STORAGE_KEY = "tester_quiz_" + category + "_" + paper;
+
+    // Embedded datasets (used when category/paper matches); falls back to data/<category>/<paper>.json
+    const EMBEDDED_DATASETS = {
+      "ACCA": {
+        "FA2": [
+          { "q": "Which statement best describes the purpose of the trial balance?", "options": ["To detect all errors in the ledger", "To list all accounts and their balances to check arithmetical accuracy", "To prepare the statement of financial position", "To record adjusting entries"], "a": 1, "explain": "A trial balance checks the arithmetical accuracy of double-entry postings." },
+          { "q": "Which of the following is an example of an adjusting entry at period end?", "options": ["Recording a cash sale", "Recognising accrued expenses", "Paying suppliers", "Issuing a sales invoice"], "a": 1 },
+          { "q": "Which error will NOT be revealed by a trial balance?", "options": ["Single-sided entry", "Error of principle", "Transposition in one entry only", "Incorrect balance brought forward"], "a": 1 },
+          { "q": "Which documents are used to support the purchases day book?", "options": ["Sales invoices", "Purchase invoices", "Goods dispatched notes", "Credit notes issued"], "a": 1 },
+          { "q": "Depreciation method allocating equal expense each year is:", "options": ["Straight-line", "Reducing-balance", "Units of production", "Revaluation"], "a": 0 },
+          { "q": "An irrecoverable debt should be:", "options": ["Added to receivables", "Written off as an expense", "Deducted from purchases", "Treated as accrued income"], "a": 1 },
+          { "q": "Which control helps ensure invoices are paid only for goods received?", "options": ["Bank reconciliation", "Three-way match (PO, GRN, Invoice)", "Budgetary control", "Aged receivables analysis"], "a": 1 },
+          { "q": "A prepayment is:", "options": ["Expense paid relating to next period", "Expense incurred but not yet paid", "Income received relating to next period", "Liability due within 12 months"], "a": 0 },
+          { "q": "Which is capital expenditure?", "options": ["Respraying a delivery van the same colour", "Replacing engine extending van life", "Routine oil change", "Fuel costs"], "a": 1 },
+          { "q": "Sales returns are recorded in the:", "options": ["Sales day book", "Sales returns day book", "Purchases day book", "Journal"], "a": 1 },
+          { "q": "The allowance for receivables is created to:", "options": ["Record cash discounts received", "Provide for expected credit losses", "Write off irrecoverable debts", "Offset trade payables"], "a": 1 },
+          { "q": "Carriage inwards is included within:", "options": ["Administrative expenses", "Distribution costs", "Cost of sales", "Finance costs"], "a": 2 },
+          { "q": "Which error requires a journal to correct?", "options": ["Casting error in day book", "Posting to the wrong side of both accounts", "Transposition error in trial balance", "Bank charges omitted from cash book"], "a": 1 },
+          { "q": "Double entry for recording depreciation charge is:", "options": ["Dr Accumulated depreciation, Cr Depreciation expense", "Dr Depreciation expense, Cr Accumulated depreciation", "Dr Asset, Cr Depreciation expense", "Dr Retained earnings, Cr Asset"], "a": 1 },
+          { "q": "If opening inventory = 8,000, purchases = 40,000, closing inventory = 10,000, cost of sales is:", "options": ["38,000", "42,000", "48,000", "58,000"], "a": 0, "explain": "COGS = 8,000 + 40,000 − 10,000 = 38,000." },
+          { "q": "Which statement about control accounts is correct?", "options": ["They replace subsidiary ledgers", "They summarise totals of receivables/payables ledgers", "They are part of the trial balance only", "They record cash transactions"], "a": 1 },
+          { "q": "A provision is recognised when:", "options": ["A possible obligation exists", "An obligation exists and outflow is probable and measurable", "No reliable estimate can be made", "Future operating losses are expected"], "a": 1 },
+          { "q": "Which method results in higher depreciation in earlier years?", "options": ["Straight-line", "Reducing-balance", "Units of production", "Sum-of-years'-digits"], "a": 1 },
+          { "q": "A suspense account is opened when:", "options": ["A difference exists in the trial balance", "Petty cash is short", "Bank is overdrawn", "Inventory is overvalued"], "a": 0 },
+          { "q": "Bad debts recovered are credited to:", "options": ["Receivables", "Bad debts recovered (income)", "Allowance for receivables", "Sales"], "a": 1 },
+          { "q": "Under the accruals basis, expenses are recognised when:", "options": ["Cash is paid", "They are invoiced", "They are incurred", "The bank balance allows"], "a": 2 },
+          { "q": "Which inventory valuation method assigns average cost to units?", "options": ["FIFO", "LIFO", "Weighted average", "Specific identification"], "a": 2 },
+          { "q": "Capital introduced by the owner is recorded as:", "options": ["Expense", "Liability", "Equity", "Income"], "a": 2 },
+          { "q": "Which is NOT a book of prime entry?", "options": ["Purchases day book", "Journal", "General ledger", "Cash book"], "a": 2 },
+          { "q": "Under straight-line, depreciation expense depends on:", "options": ["Usage hours", "Cost, residual value, useful life", "Carrying amount only", "Market value"], "a": 1 },
+          { "q": "A credit note received from supplier is recorded in:", "options": ["Sales returns day book", "Purchases returns day book", "Journal only", "Cash book"], "a": 1 },
+          { "q": "Bank reconciliation explains differences between:", "options": ["Petty cash and ledger", "Cash book and bank statement", "Sales ledger and receivables control", "Purchases ledger and payables control"], "a": 1 },
+          { "q": "Which is a revenue expenditure?", "options": ["Adding a new floor to a building", "Major overhaul extending useful life", "Annual insurance premium", "Acquisition of a patent"], "a": 2 },
+          { "q": "Allowance for receivables is increased when:", "options": ["Credit risk increases", "Irrecoverable debt is written off", "Cash collected early", "Discount allowed given"], "a": 0 },
+          { "q": "Petty cash imprest is restored by:", "options": ["Withdrawing the difference from bank", "Recording the petty cash expenses and topping up to imprest amount", "Writing off shortages", "Issuing a credit note"], "a": 1 }
+        ],
+        "MA1": [
+          { "q": "Which is NOT a purpose of management information?", "options": ["Planning", "Controlling", "Decision-making", "Auditing financial statements"], "a": 3 },
+          { "q": "A KPI should be:", "options": ["Vague and broad", "Specific, measurable and aligned to objectives", "Set annually and never reviewed", "Kept secret from staff"], "a": 1 },
+          { "q": "Which costing method accumulates costs by job?", "options": ["Process costing", "Job costing", "Activity-based costing", "Marginal costing"], "a": 1 },
+          { "q": "Prime cost equals:", "options": ["Direct materials + Direct labour + Production overheads", "Direct materials + Direct labour", "Conversion cost + Direct materials", "Direct labour + Production overheads"], "a": 1 },
+          { "q": "Which is a qualitative factor in decision-making?", "options": ["Unit contribution", "Capacity utilisation", "Employee morale", "Fixed cost per unit"], "a": 2 },
+          { "q": "Contribution per unit is:", "options": ["Selling price − Variable cost per unit", "Selling price − Fixed cost per unit", "Selling price − Total cost per unit", "Variable cost per unit − Fixed cost per unit"], "a": 0 },
+          { "q": "Break-even point (units) equals:", "options": ["Fixed costs / Contribution per unit", "Fixed costs × Contribution per unit", "Contribution per unit / Fixed costs", "Fixed costs / Selling price"], "a": 0 },
+          { "q": "In a process account, normal loss is:", "options": ["Unexpected and fully costed to output", "Expected and absorbed by good output", "Unexpected and credited to abnormal gain", "Always valueless"], "a": 1 },
+          { "q": "A budget is best described as:", "options": ["An exact prediction", "A plan quantified in monetary terms", "A financial statement", "A long-term strategy"], "a": 1 },
+          { "q": "Which variance measures difference between standard and actual selling price?", "options": ["Sales volume variance", "Sales price variance", "Material price variance", "Labour efficiency variance"], "a": 1 },
+          { "q": "Activity-based costing assigns overheads based on:", "options": ["Direct labour hours only", "Machine hours only", "Multiple cost drivers reflecting activity", "Units produced"], "a": 2 },
+          { "q": "Relevant costs are:", "options": ["Historical and sunk", "Future, incremental and cash-based", "Allocated fixed costs", "Absorbed overheads"], "a": 1 },
+          { "q": "Limiting factor analysis prioritises products by:", "options": ["Highest selling price", "Highest contribution per unit", "Highest contribution per unit of limiting factor", "Lowest variable cost"], "a": 2 },
+          { "q": "A flexible budget is useful because it:", "options": ["Eliminates variances", "Allows performance comparison at actual activity levels", "Ensures fixed costs vary with output", "Removes need for standard costing"], "a": 1 },
+          { "q": "Standard costing primarily supports:", "options": ["External financial reporting", "Performance control and cost management", "Tax computation", "Cash management"], "a": 1 },
+          { "q": "Learning curve effects imply:", "options": ["Unit times increase as cumulative output increases", "Unit times decrease at a constant percentage as cumulative output doubles", "Fixed costs will decline", "Sales price must fall"], "a": 1 },
+          { "q": "Which statement about marginal costing is correct?", "options": ["It treats fixed costs as product costs", "It is unsuitable for short-term decisions", "It values inventory at variable production cost only", "It cannot be reconciled to absorption costing"], "a": 2 },
+          { "q": "Which inventory control tool signals reorder?", "options": ["EOQ", "Reorder level", "Safety stock", "Lead time"], "a": 1 },
+          { "q": "EOQ balances:", "options": ["Ordering and holding costs", "Purchase price and holding costs", "Ordering and shortage costs", "Lead time and purchase price"], "a": 0 },
+          { "q": "A responsibility centre accountable for revenue and costs is a:", "options": ["Cost centre", "Revenue centre", "Profit centre", "Investment centre"], "a": 2 }
+        ],
+        "MA2": [
+          { "q": "Which cost is most likely to be semi-variable?", "options": ["Factory rent", "Direct materials", "Electricity with standing charge", "Depreciation (straight-line)"], "a": 2 },
+          { "q": "Absorption costing overhead rate is typically based on:", "options": ["Only direct material cost", "A single volume-related base or activity drivers", "Profit margin", "Number of customers"], "a": 1 },
+          { "q": "Target costing starts from:", "options": ["Estimated cost then adds margin", "Market-based price minus desired profit to derive allowable cost", "Actual cost plus margin", "Standard cost plus variance"], "a": 1 },
+          { "q": "Life-cycle costing considers costs:", "options": ["At production only", "Over the entire product life", "Only during R&D", "Only after launch"], "a": 1 },
+          { "q": "Which is a performance measure for an investment centre?", "options": ["Labour efficiency variance", "Material usage variance", "ROI (Return on Investment)", "Contribution per unit"], "a": 2 },
+          { "q": "Residual income is:", "options": ["Profit ÷ capital employed", "Profit − imputed interest on capital", "Sales − variable costs", "Operating cash flow"], "a": 1 },
+          { "q": "Throughput accounting primarily aims to:", "options": ["Maximise inventory", "Maximise throughput contribution at the bottleneck", "Allocate overheads to products", "Reduce selling price"], "a": 1 },
+          { "q": "A variance due to paying a different wage rate than standard is:", "options": ["Labour efficiency variance", "Labour rate variance", "Material price variance", "Overhead volume variance"], "a": 1 },
+          { "q": "Which budgeting approach starts from zero each period?", "options": ["Incremental budgeting", "Zero-based budgeting", "Rolling budgeting", "Activity-based budgeting"], "a": 1 },
+          { "q": "Sensitivity analysis is used to:", "options": ["Remove risk", "Assess how outcomes change with key assumptions", "Guarantee a profit", "Calculate EOQ"], "a": 1 },
+          { "q": "Relevant cost for a component that can be bought or made is:", "options": ["Historical cost", "Replacement cost or opportunity cost", "Absorbed overhead", "Book value"], "a": 1 },
+          { "q": "Shadow price in linear programming represents:", "options": ["Sales price per unit", "Increase in objective per extra unit of scarce resource", "Cost per unit of material", "Labour rate"], "a": 1 },
+          { "q": "Kaizen costing focuses on:", "options": ["Initial design only", "Continuous cost reduction during production", "Marketing campaigns", "Quality conformance only"], "a": 1 },
+          { "q": "Backflush costing is associated with:", "options": ["Batch costing", "Job costing", "Just-in-time production", "Process costing"], "a": 2 },
+          { "q": "A favourable sales mix variance implies:", "options": ["Actual mix yielded lower contribution", "Actual mix yielded higher contribution", "No change in contribution", "Prices were higher"], "a": 1 },
+          { "q": "Learning curve of 80% means:", "options": ["Every time cumulative output doubles, average time per unit becomes 80% of previous", "Time per unit increases by 20%", "Costs fall by 80% each period", "Fixed cost falls by 20%"], "a": 0 },
+          { "q": "Which pricing method adds a mark-up to cost?", "options": ["Penetration pricing", "Skimming pricing", "Cost-plus pricing", "Target pricing"], "a": 2 },
+          { "q": "Mix and yield variances relate to:", "options": ["Sales price", "Materials usage", "Overhead absorption", "Labour idle time"], "a": 1 },
+          { "q": "A rolling budget:", "options": ["Fixes 12 months once per year", "Adds a new period as one finishes", "Is the same as zero-based", "Is not updated"], "a": 1 },
+          { "q": "Operating gearing refers to:", "options": ["Proportion of fixed to variable costs", "Debt to equity ratio", "Inventory turnover", "Contribution margin"], "a": 0 }
+        ]
+      },
+      "MDCAT": {
+        "Biology": [
+          { "q": "Which is not a characteristic of living organisms?", "options": ["Metabolism", "Homeostasis", "Crystallization", "Growth"], "a": 2 },
+          { "q": "The basic unit of life is the:", "options": ["Atom", "Molecule", "Cell", "Tissue"], "a": 2 },
+          { "q": "Mitochondria are the site of:", "options": ["Protein synthesis", "Aerobic respiration", "Photosynthesis", "DNA replication"], "a": 1 },
+          { "q": "Which bond links amino acids in a protein?", "options": ["Glycosidic", "Peptide", "Phosphodiester", "Hydrogen"], "a": 1 },
+          { "q": "Which organelle contains hydrolytic enzymes?", "options": ["Ribosome", "Lysosome", "Golgi apparatus", "Smooth ER"], "a": 1 },
+          { "q": "DNA replication is:", "options": ["Conservative", "Semi-conservative", "Dispersive", "Random"], "a": 1 },
+          { "q": "Which phase of mitosis do chromosomes align at the equator?", "options": ["Prophase", "Metaphase", "Anaphase", "Telophase"], "a": 1 },
+          { "q": "The functional unit of the kidney is:", "options": ["Neuron", "Nephron", "Alveolus", "Sarcomere"], "a": 1 },
+          { "q": "Which blood cells are responsible for immunity?", "options": ["Erythrocytes", "Leukocytes", "Platelets", "Chondrocytes"], "a": 1 },
+          { "q": "Gas exchange in plants occurs mainly through:", "options": ["Stomata", "Lenticels", "Cuticle", "Root hairs"], "a": 0 },
+          { "q": "The enzyme that synthesizes RNA from DNA is:", "options": ["DNA polymerase", "RNA polymerase", "Ligase", "Primase"], "a": 1 },
+          { "q": "Which is a monosaccharide?", "options": ["Glucose", "Sucrose", "Lactose", "Starch"], "a": 0 },
+          { "q": "Hemoglobin binds oxygen using:", "options": ["Calcium", "Iron", "Copper", "Zinc"], "a": 1 },
+          { "q": "Which hormone regulates blood glucose by lowering it?", "options": ["Glucagon", "Insulin", "Adrenaline", "Cortisol"], "a": 1 },
+          { "q": "Transpiration is the loss of water from:", "options": ["Roots", "Stem", "Leaves", "Flowers"], "a": 2 },
+          { "q": "Which structure is not found in prokaryotes?", "options": ["Ribosomes", "Cell wall", "Nucleus", "Plasma membrane"], "a": 2 },
+          { "q": "Photosynthesis occurs in:", "options": ["Mitochondria", "Chloroplasts", "Nucleus", "Golgi"], "a": 1 },
+          { "q": "Which is not a connective tissue?", "options": ["Bone", "Blood", "Cartilage", "Epithelial"], "a": 3 },
+          { "q": "Antibodies are produced by:", "options": ["T-lymphocytes", "B-lymphocytes (plasma cells)", "Macrophages", "Neutrophils"], "a": 1 },
+          { "q": "The primary structure of a protein is determined by:", "options": ["Hydrogen bonding", "Sequence of amino acids", "Disulfide bonds", "Ionic interactions"], "a": 1 }
+        ],
+        "Chemistry": [
+          { "q": "Which subatomic particle determines the element’s identity?", "options": ["Neutron", "Electron", "Proton", "Positron"], "a": 2 },
+          { "q": "Avogadro’s number equals:", "options": ["6.02 × 10^23 mol⁻¹", "1.66 × 10^-27 kg", "8.314 J mol⁻¹ K⁻¹", "273 K"], "a": 0 },
+          { "q": "Strong electrolytes in water:", "options": ["Partially ionize", "Do not ionize", "Completely ionize", "Only ionize at high temperature"], "a": 2 },
+          { "q": "pH of a neutral solution at 25°C is:", "options": ["0", "7", "14", "Depends on solvent"], "a": 1 },
+          { "q": "The shape of methane (CH4) is:", "options": ["Trigonal planar", "Tetrahedral", "Linear", "Bent"], "a": 1 },
+          { "q": "Which bond is strongest among these?", "options": ["Ionic bond", "Hydrogen bond", "Covalent bond (sigma)", "Van der Waals"], "a": 2 },
+          { "q": "Oxidation involves:", "options": ["Gain of electrons", "Loss of electrons", "Decrease in oxidation state", "No change in electrons"], "a": 1 },
+          { "q": "Ideal gas equation is:", "options": ["PV = nR/T", "PV = nRT", "P/V = nRT", "P + V = nRT"], "a": 1 },
+          { "q": "Enzyme catalysis is best explained by:", "options": ["Lock and key model", "Hard-soft acid-base", "Lanthanide contraction", "Schrodinger equation"], "a": 0 },
+          { "q": "Saponification produces:", "options": ["Ester", "Soap and glycerol", "Alcohol and acid", "Aldehyde"], "a": 1 },
+          { "q": "Hybridization in ethene (C2H4) at carbon is:", "options": ["sp", "sp2", "sp3", "sp3d"], "a": 1 },
+          { "q": "Order of acid strength: HCl, HBr, HI (in water):", "options": ["HCl > HBr > HI", "HI > HBr > HCl", "HBr > HI > HCl", "Equal"], "a": 1 },
+          { "q": "A buffer solution resists change in:", "options": ["pH", "Temperature", "Pressure", "Volume"], "a": 0 },
+          { "q": "The functional group in aldehydes is:", "options": ["–COOH", "–CHO", "–CONH2", "–OH"], "a": 1 },
+          { "q": "Rate law depends on:", "options": ["Balanced equation only", "Mechanism and rate-determining step", "Stoichiometric coefficients", "Equilibrium constant"], "a": 1 },
+          { "q": "Which has the highest boiling point?", "options": ["Propane", "Propanol", "Propene", "Propyne"], "a": 1 },
+          { "q": "Allotropes of carbon include:", "options": ["CO and CO2", "Graphite and diamond", "Methane and ethane", "Benzene and toluene"], "a": 1 },
+          { "q": "Isotopes have the same:", "options": ["Mass number", "Number of neutrons", "Atomic number (protons)", "Atomic mass"], "a": 2 },
+          { "q": "Le Chatelier’s principle predicts response to:", "options": ["Catalyst addition", "Change in concentration, pressure, temperature", "Change in surface area only", "Ionic strength only"], "a": 1 },
+          { "q": "Primary alcohol on mild oxidation gives:", "options": ["Ketone", "Aldehyde", "Carboxylic acid", "Alkene"], "a": 1 }
+        ],
+        "Physics": [
+          { "q": "SI unit of force is:", "options": ["Joule", "Newton", "Watt", "Pascal"], "a": 1 },
+          { "q": "Velocity-time graph area equals:", "options": ["Displacement", "Acceleration", "Force", "Momentum"], "a": 0 },
+          { "q": "Ohm’s law states V is proportional to:", "options": ["I at constant temperature", "R at constant I", "P at constant R", "Q at constant t"], "a": 0 },
+          { "q": "Power unit is:", "options": ["J s", "J/s", "N/s", "N·m"], "a": 1 },
+          { "q": "Acceleration due to gravity on Earth is approx:", "options": ["8.9 m/s²", "9.8 m/s²", "10.8 m/s²", "1.6 m/s²"], "a": 1 },
+          { "q": "Work done is zero when force is:", "options": ["Parallel to displacement", "Opposite to displacement", "Perpendicular to displacement", "Variable"], "a": 2 },
+          { "q": "Frequency × wavelength equals:", "options": ["Velocity of wave", "Amplitude", "Intensity", "Energy"], "a": 0 },
+          { "q": "Unit of electric charge:", "options": ["Volt", "Ohm", "Coulomb", "Farad"], "a": 2 },
+          { "q": "Lens that converges light rays:", "options": ["Concave lens", "Convex lens", "Plano-concave", "Cylindrical"], "a": 1 },
+          { "q": "Thermodynamic process at constant volume:", "options": ["Isothermal", "Isobaric", "Isochoric", "Adiabatic"], "a": 2 },
+          { "q": "Photon energy equals:", "options": ["hf", "hc/λ", "Both A and B", "h/λ"], "a": 2 },
+          { "q": "Unit of pressure:", "options": ["N/m", "N·m", "N/m²", "J/m³"], "a": 2 },
+          { "q": "Faraday’s law relates induced EMF to:", "options": ["Charge flow", "Change in magnetic flux", "Electric field strength", "Resistance"], "a": 1 },
+          { "q": "Capacitance unit is:", "options": ["Henry", "Tesla", "Farad", "Weber"], "a": 2 },
+          { "q": "Escape velocity depends on:", "options": ["Mass of object", "Height of throw", "Mass and radius of planet", "Atmospheric density"], "a": 2 },
+          { "q": "In SHM, acceleration is proportional to:", "options": ["Displacement and directed away from mean", "Displacement and directed towards mean", "Velocity", "Amplitude"], "a": 1 },
+          { "q": "Unit of angular frequency ω is:", "options": ["rad", "rad/s", "1/s²", "Hz·rad"], "a": 1 },
+          { "q": "If two resistors R1 and R2 are in series, equivalent resistance is:", "options": ["R1 + R2", "R1R2/(R1+R2)", "R1 − R2", "1/(R1+R2)"], "a": 0 },
+          { "q": "Critical angle occurs when light goes from:", "options": ["Low to high refractive index", "High to low refractive index", "Vacuum to glass", "Air to vacuum"], "a": 1 },
+          { "q": "The unit of magnetic flux is:", "options": ["Tesla", "Weber", "Henry", "Volt"], "a": 1 }
+        ],
+        "English": [
+          { "q": "Choose the correct synonym of 'Adequate':", "options": ["Sufficient", "Deficient", "Sparse", "Trivial"], "a": 0 },
+          { "q": "Find the antonym of 'Hostile':", "options": ["Amiable", "Aggressive", "Belligerent", "Rude"], "a": 0 },
+          { "q": "Fill the blank: She is keen _____ learning.", "options": ["at", "on", "in", "for"], "a": 1 },
+          { "q": "Identify the error: 'He did not knew the answer.'", "options": ["did not knew", "the answer", "He", "No error"], "a": 0 },
+          { "q": "Choose the correctly spelled word:", "options": ["Accomodate", "Acommodate", "Accommodate", "Accommmodate"], "a": 2 },
+          { "q": "Select the best replacement: 'He is superior than me.'", "options": ["superior from me", "superior to me", "more superior than me", "superior with me"], "a": 1 },
+          { "q": "Which is a collective noun?", "options": ["Flock", "Run", "Quickly", "Happiness"], "a": 0 },
+          { "q": "Choose the correct preposition: 'He congratulated me _____ my success.'", "options": ["of", "on", "for", "to"], "a": 1 },
+          { "q": "Choose the indirect speech: He said, 'I am tired.'", "options": ["He said he was tired.", "He says he is tired.", "He told he is tired.", "He told that he was tired."], "a": 0 },
+          { "q": "Pick the correct article: 'She adopted _____ orphan.'", "options": ["a", "an", "the", "no article"], "a": 1 },
+          { "q": "Fill the blank: 'Neither Ali nor his friends _____ present.'", "options": ["was", "has", "were", "is"], "a": 2 },
+          { "q": "Choose the correct form: 'I wish I _____ taller.'", "options": ["am", "were", "was", "be"], "a": 1 },
+          { "q": "Find the synonym of 'Candid':", "options": ["Frank", "Ambiguous", "Evasive", "Reserved"], "a": 0 },
+          { "q": "Identify the part of speech: 'Swiftly'", "options": ["Noun", "Adverb", "Adjective", "Verb"], "a": 1 },
+          { "q": "Choose the correct tense: 'By next year, they _____ completed the project.'", "options": ["have", "had", "will have", "will"], "a": 2 },
+          { "q": "One word for 'A person who loves books':", "options": ["Bibliophile", "Philanthropist", "Technophile", "Xenophile"], "a": 0 },
+          { "q": "Choose the correct conjunction: 'He worked hard _____ he failed.'", "options": ["and", "so", "but", "or"], "a": 2 },
+          { "q": "Passive voice: 'They will announce the result tomorrow.'", "options": ["The result will be announced tomorrow.", "The result is announced tomorrow.", "The result announced tomorrow.", "The result has been announced tomorrow."], "a": 0 },
+          { "q": "Identify the error: 'Each of the players have a kit.'", "options": ["Each", "have", "players", "kit"], "a": 1 },
+          { "q": "Choose the correct idiom meaning 'to start over':", "options": ["Break the ice", "Hit the sack", "Back to square one", "Spill the beans"], "a": 2 }
+        ],
+        "Logical Reasoning": [
+          { "q": "All cats are mammals. Some mammals are pets. Which is true?", "options": ["All pets are cats", "Some cats may be pets", "No cats are pets", "All mammals are cats"], "a": 1 },
+          { "q": "Find the odd one out:", "options": ["Square", "Rectangle", "Triangle", "Parallelogram"], "a": 2 },
+          { "q": "Complete the series: 2, 6, 12, 20, ?", "options": ["28", "30", "32", "34"], "a": 2 },
+          { "q": "If A < B and B < C, then:", "options": ["A > C", "A = C", "A < C", "Cannot be determined"], "a": 2 },
+          { "q": "Choose the best analogy: 'Finger : Hand :: Leaf : ?'", "options": ["Tree", "Branch", "Stem", "Root"], "a": 1 },
+          { "q": "Which conclusion follows? 'Some students are athletes. All athletes train daily.'", "options": ["All students train daily", "Some students train daily", "No students train daily", "No conclusion"], "a": 1 },
+          { "q": "An assumption is:", "options": ["A proven fact", "An unstated premise taken to be true", "A conclusion", "A fallacy"], "a": 1 },
+          { "q": "If the code for CAT is DBU, the code for DOG is:", "options": ["EPI", "EOG", "DPP", "FQH"], "a": 0 },
+          { "q": "Statement: 'No pens are pencils.' Which is true?", "options": ["All pencils are pens", "Some pens are pencils", "No pencils are pens", "Some pencils are pens"], "a": 2 },
+          { "q": "Which number completes: 3, 9, 27, 81, ?", "options": ["108", "162", "243", "324"], "a": 2 },
+          { "q": "If TODAY is coded as UPEBZ, then BOOK is:", "options": ["CPPJ", "CPLL", "CPPL", "CPPL"], "a": 0 },
+          { "q": "Syllogism: All flowers are plants. Some plants are herbs. Conclusions?", "options": ["Some flowers are herbs (definite)", "No flowers are herbs", "Some herbs may be flowers (possible)", "All herbs are flowers"], "a": 2 },
+          { "q": "Arrange to form a logical order: 1) Seed 2) Plant 3) Flower 4) Fruit", "options": ["1,2,3,4", "2,1,3,4", "1,3,2,4", "1,2,4,3"], "a": 0 },
+          { "q": "If all A are B, and some B are C, then:", "options": ["Some A may be C", "All C are A", "No C are A", "All A are C"], "a": 0 },
+          { "q": "Identify the next term: AZ, BY, CX, ?", "options": ["DW", "EV", "FW", "DU"], "a": 0 },
+          { "q": "Odd one out:", "options": ["Copper", "Iron", "Aluminum", "Wood"], "a": 3 },
+          { "q": "If north is turned to east by a 90° rotation, then west becomes:", "options": ["South", "North", "East", "West"], "a": 0 },
+          { "q": "Which figure has all angles equal?", "options": ["Rhombus", "Rectangle", "Parallelogram", "Trapezium"], "a": 1 },
+          { "q": "A necessary condition for passing is:", "options": ["Scoring above the pass mark", "Studying hard", "Attempting all questions", "Watching tutorials"], "a": 0 },
+          { "q": "Statement: 'Some cars are electric.' Conclusion:", "options": ["All cars are electric", "No cars are electric", "Some cars are not electric", "At least one car is electric"], "a": 3 }
+        ]
+      },
+      "CA": {
+        "Accounting and Financial Reporting": [
+          { "q": "Which statement best describes faithful representation?", "options": ["Information is timely", "Information is complete, neutral and free from error", "Information is comparable", "Information is verifiable"], "a": 1 },
+          { "q": "Useful financial information should be:", "options": ["Relevant and faithfully represented", "Conservative and optimistic", "Precise to the dollar", "Only historical"], "a": 0 },
+          { "q": "Under IFRS, PPE is initially measured at:", "options": ["Fair value", "Cost", "Net realisable value", "Revalued amount"], "a": 1 },
+          { "q": "Component depreciation requires:", "options": ["One rate for all asset parts", "Separating significant parts with different useful lives", "No depreciation if repairs occur", "Straight-line only"], "a": 1 },
+          { "q": "Impairment loss for a cash-generating unit is measured by:", "options": ["Carrying amount minus recoverable amount", "Cost minus residual value", "Fair value minus cost", "Market value only"], "a": 0 },
+          { "q": "Revenue is recognised when:", "options": ["Cash is received", "Performance obligation is satisfied", "Invoice is issued", "Customer acknowledges order"], "a": 1 },
+          { "q": "Inventory is measured at:", "options": ["Cost", "Net realisable value", "Lower of cost and NRV", "Fair value"], "a": 2 },
+          { "q": "Leases transferring substantially all risks and rewards are:", "options": ["Operating leases", "Finance leases", "Short-term leases", "No lease"], "a": 1 },
+          { "q": "Provision is recognised when:", "options": ["Possible obligation exists", "Present obligation with probable outflow and reliable estimate", "Remote obligation", "Future operating losses expected"], "a": 1 },
+          { "q": "Which is NOT other comprehensive income?", "options": ["Revaluation surplus", "Exchange differences on foreign operations", "Unrealised FVOCI gains", "Revenue from sales"], "a": 3 },
+          { "q": "Cash equivalents include:", "options": ["Long-term deposits", "Inventory", "Short-term, highly liquid investments", "Trade receivables"], "a": 2 },
+          { "q": "Consolidation is required when:", "options": ["Investor has significant influence", "Investor controls the investee", "Investor holds any share", "Investor is customer"], "a": 1 },
+          { "q": "Goodwill arises on:", "options": ["Asset revaluation", "Business combination when consideration exceeds net assets", "Internal development", "Purchase of inventory"], "a": 1 },
+          { "q": "Which is a qualitative characteristic enhancing usefulness?", "options": ["Relevance", "Faithful representation", "Comparability", "Recognition"], "a": 2 },
+          { "q": "Depreciation is:", "options": ["Valuation of asset", "Allocation of depreciable amount over useful life", "Provision for replacement", "Cash reserve"], "a": 1 },
+          { "q": "Fair value hierarchy Level 1 inputs are:", "options": ["Unobservable inputs", "Observable inputs other than quoted prices", "Quoted prices in active markets for identical assets", "Historical cost"], "a": 2 },
+          { "q": "A change in depreciation method is:", "options": ["Change in policy", "Change in estimate", "Error correction", "Prior period item"], "a": 1 },
+          { "q": "Events after reporting period adjusting if:", "options": ["They provide evidence of conditions existing at period end", "They are future plans", "They are dividends proposed", "They are non-adjusting only"], "a": 0 },
+          { "q": "Which measurement basis reflects current exit price?", "options": ["Historical cost", "Fair value", "Value in use", "NRV"], "a": 1 },
+          { "q": "Statement of changes in equity shows:", "options": ["Cash flows", "Equity movements including profit and OCI", "Only share capital", "Liabilities"], "a": 1 }
+        ],
+        "Taxation": [
+          { "q": "Which is a direct tax?", "options": ["Sales tax (VAT)", "Customs duty", "Income tax", "Excise duty"], "a": 2 },
+          { "q": "Residence for tax purposes generally affects:", "options": ["Rate of customs duty", "Scope of income subject to tax", "VAT registration only", "Capital allowances"], "a": 1 },
+          { "q": "Which of the following is typically tax-deductible for a business?", "options": ["Fines and penalties", "Entertainment of clients (non-business)", "Ordinary business expenses", "Personal expenses"], "a": 2 },
+          { "q": "Capital gains are generally taxed on:", "options": ["Increase in inventory value", "Sale of fixed assets", "Interest income", "Salary income"], "a": 1 },
+          { "q": "Input tax is:", "options": ["VAT on sales", "VAT on purchases eligible for credit", "Withholding tax from employees", "Customs duty on imports"], "a": 1 },
+          { "q": "Withholding tax is best described as:", "options": ["A tax paid by the government", "Tax deducted at source on certain payments", "Tax refunded to exporters", "Tax on capital gains only"], "a": 1 },
+          { "q": "A progressive tax system means:", "options": ["Same rate for everyone", "Rate decreases as income increases", "Rate increases as income increases", "Tax based on consumption only"], "a": 2 },
+          { "q": "Which expense is disallowed for corporation tax?", "options": ["Staff salaries", "Ordinary repairs", "Bribes and illegal payments", "Office rent"], "a": 2 },
+          { "q": "VAT returns typically report:", "options": ["Only cash receipts", "Input and output tax", "Income tax payable", "Capital gains"], "a": 1 },
+          { "q": "Tax depreciation (capital allowances) are:", "options": ["Always identical to accounting depreciation", "Determined by tax rules/schedules", "Optional and arbitrary", "Based on revaluation gains"], "a": 1 },
+          { "q": "Double taxation agreements seek to:", "options": ["Increase total tax", "Eliminate tax on residents", "Avoid income being taxed twice", "Fix VAT rates"], "a": 2 },
+          { "q": "Loss relief typically allows:", "options": ["Converting losses to dividends", "Offset against current/ future taxable profits per rules", "Refund of all taxes paid", "Ignoring losses"], "a": 1 },
+          { "q": "Personal allowance in income tax is:", "options": ["A tax credit for VAT", "A deduction from taxable income", "A corporate incentive", "A customs rebate"], "a": 1 },
+          { "q": "Tax evasion is:", "options": ["Legal minimisation of tax", "Illegal concealment or fraud to avoid tax", "Payment by instalments", "Advance tax payment"], "a": 1 },
+          { "q": "Which is generally treated as employment income?", "options": ["Dividends", "Wages and salaries", "Interest income", "Capital gains"], "a": 1 },
+          { "q": "Thin capitalisation rules address:", "options": ["Excessive debt to reduce taxable income", "Understated inventory", "Cash economy", "VAT fraud"], "a": 0 },
+          { "q": "Output tax is:", "options": ["VAT charged on sales", "VAT paid on purchases", "Income tax withheld", "Capital gains tax"], "a": 0 },
+          { "q": "A tax credit reduces:", "options": ["Taxable income", "Amount of tax payable", "Accounting profit", "Gross salary"], "a": 1 },
+          { "q": "Transfer pricing rules are intended to:", "options": ["Encourage profit shifting", "Ensure arm’s length pricing between related parties", "Fix prices for all companies", "Set minimum VAT rates"], "a": 1 },
+          { "q": "Advance tax payments are typically:", "options": ["Paid after year end", "Paid during the year based on estimates", "Only for individuals", "Refundable without assessment"], "a": 1 }
+        ],
+        "Audit and Assurance": [
+          { "q": "Primary objective of an external audit is to:", "options": ["Detect all fraud", "Express an opinion on financial statements", "Prepare the accounts", "Improve internal controls"], "a": 1 },
+          { "q": "Audit risk is a function of:", "options": ["Detection risk only", "Inherent, control and detection risk", "Business risk only", "Sampling risk only"], "a": 1 },
+          { "q": "Materiality is based on:", "options": ["Exact thresholds fixed by law", "Nature and magnitude that could influence users", "Auditor’s convenience", "Tax rules"], "a": 1 },
+          { "q": "Which provides the most reliable audit evidence?", "options": ["Oral inquiries", "External confirmations directly received by auditor", "Internal staff explanations", "Management representations"], "a": 1 },
+          { "q": "Tests of controls are performed to:", "options": ["Detect misstatements directly", "Evaluate operating effectiveness of controls", "Substitute for substantive procedures always", "Replace risk assessment"], "a": 1 },
+          { "q": "Substantive procedures include:", "options": ["Reperformance of controls", "Inquiry about controls", "Tests of details and analytical procedures", "Walkthroughs only"], "a": 2 },
+          { "q": "Engagement letter primarily sets out:", "options": ["Audit fee only", "Scope and terms of the audit", "Audit timetable only", "Accounting policies"], "a": 1 },
+          { "q": "Independence requires auditors to be:", "options": ["Friendly with management", "Objective and free from conflicts of interest", "Shareholders", "Former employees"], "a": 1 },
+          { "q": "Sampling risk relates to:", "options": ["Audit planning", "The possibility that the sample is not representative", "Materiality calculations", "Going concern"], "a": 1 },
+          { "q": "Going concern assumption implies:", "options": ["Entity will liquidate imminently", "Entity will continue for the foreseeable future", "Assets measured at liquidation values only", "Auditor must prepare accounts"], "a": 1 },
+          { "q": "An emphasis of matter paragraph is used to:", "options": ["Modify the opinion", "Draw attention to a matter appropriately presented/disclosed", "Replace qualifications", "Discuss immaterial items"], "a": 1 },
+          { "q": "Control environment includes:", "options": ["Entity's attitude, awareness and actions regarding internal control", "Only IT controls", "Only segregation of duties", "Only physical safeguards"], "a": 0 },
+          { "q": "Analytical procedures involve:", "options": ["Always recalculation only", "Evaluations of financial information through plausible relationships", "Reperformance of controls", "Inventory counts"], "a": 1 },
+          { "q": "Which is a limitation of internal control?", "options": ["Segregation of duties", "Management override", "Authorization controls", "Physical safeguards"], "a": 1 },
+          { "q": "The auditor’s report with an unmodified opinion states:", "options": ["True and fair view (or present fairly)", "Absolute assurance", "Preparation by auditor", "No misstatements at all"], "a": 0 },
+          { "q": "Confirmations of receivables provide evidence about:", "options": ["Existence and rights", "Valuation only", "Completeness only", "Classification"], "a": 0 },
+          { "q": "Subsequent events review period typically extends to:", "options": ["Audit planning date", "Date of auditor’s report", "Period-end date", "Annual general meeting"], "a": 1 },
+          { "q": "A qualified opinion is issued when:", "options": ["Material and pervasive misstatement", "Material but not pervasive misstatement or limitation of scope", "No misstatement", "Going concern uncertainty appropriately disclosed"], "a": 1 },
+          { "q": "Internal audit is primarily responsible to:", "options": ["External auditor", "Management/Board/Audit committee", "Shareholders directly", "Regulators"], "a": 1 },
+          { "q": "Which control best mitigates cash receipts theft?", "options": ["Monthly bank reconciliation", "Daily cash counts and independent deposits", "Sequential numbering of invoices", "Supplier statements reconciliation"], "a": 1 }
+        ]
+      },
+      "ISSB": {
+        "Verbal Reasoning": [
+          { "q": "Statement: All athletes are disciplined. Ahmed is an athlete. Conclusion:", "options": ["Ahmed is not disciplined", "Ahmed is disciplined", "Ahmed is a coach", "No conclusion"], "a": 1 },
+          { "q": "Find the odd one out:", "options": ["Analyse", "Scrutinize", "Examine", "Ignore"], "a": 3 },
+          { "q": "Synonym of 'Candid':", "options": ["Frank", "Deceitful", "Reserved", "Ambiguous"], "a": 0 },
+          { "q": "If A > B and B > C, then:", "options": ["A < C", "A = C", "A > C", "Cannot be determined"], "a": 2 },
+          { "q": "Antonym of 'Abundant':", "options": ["Copious", "Plentiful", "Scarce", "Ample"], "a": 2 },
+          { "q": "Complete the analogy: Book is to Reading as Fork is to:", "options": ["Stirring", "Drawing", "Writing", "Eating"], "a": 3 },
+          { "q": "Choose the word that best completes the sentence: He was _____ to accept the offer without reading the terms.", "options": ["prudent", "reluctant", "rash", "meticulous"], "a": 2 },
+          { "q": "Identify the argument type: 'If it rains, the ground gets wet. It rained. Therefore, the ground is wet.'", "options": ["Inductive", "Abductive", "Deductive", "Analogical"], "a": 2 },
+          { "q": "Which word does not belong with the others?", "options": ["Pupil", "Teacher", "Tutor", "Instructor"], "a": 0 },
+          { "q": "Rearrange to form a coherent sentence: 'to / the / arrived / late / she / meeting'", "options": ["She arrived late to the meeting", "To the meeting she late arrived", "She late arrived to the meeting", "Late she arrived to the meeting"], "a": 0 },
+          { "q": "Choose the best conclusion: 'Some engineers are musicians. All musicians are creative.'", "options": ["All engineers are creative", "Some engineers are creative", "No engineer is creative", "Cannot be determined"], "a": 1 },
+          { "q": "Which is a valid inference? 'Most A are B. All B are C.'", "options": ["Most A are C", "All A are C", "No A are C", "Some A are not C"], "a": 0 },
+          { "q": "Find the correctly spelled word:", "options": ["Consciense", "Conscience", "Conscence", "Conscious"], "a": 1 },
+          { "q": "Choose the correct option to complete: 'Her explanation was so _____ that nobody doubted her.'", "options": ["implausible", "perfunctory", "credible", "opaque"], "a": 2 },
+          { "q": "Odd one out:", "options": ["Square", "Rectangle", "Triangle", "Parallelogram"], "a": 2 },
+          { "q": "Identify the logical fallacy: 'Everyone is buying the phone, so it must be the best.'", "options": ["Straw man", "Ad hominem", "Bandwagon", "Slippery slope"], "a": 2 },
+          { "q": "If all roses are flowers, and some flowers fade quickly, then:", "options": ["No roses fade quickly", "Some roses fade quickly", "All roses fade quickly", "Cannot be determined"], "a": 3 },
+          { "q": "Choose the best synonym of 'Succinct':", "options": ["Verbose", "Concise", "Circuitous", "Diffuse"], "a": 1 },
+          { "q": "Complete the series: A, C, F, J, O, ?", "options": ["U", "V", "T", "S"], "a": 0 },
+          { "q": "Which pair is analogous to 'Doctor:Hospital'?", "options": ["Chef:Restaurant", "Pilot:Runway", "Student:Class", "Judge:Jury"], "a": 0 }
+        ],
+        "Non-Verbal Reasoning": [
+          { "q": "Which shape completes the series? ▲, ■, ●, ▲, ■, ?", "options": ["●", "▲", "■", "◆"], "a": 0 },
+          { "q": "Find the odd one out:", "options": ["▲", "■", "●", "◆"], "a": 3 },
+          { "q": "Rotate a 'L' shape 90° clockwise. It becomes:", "options": ["Γ", "⊥", "⅃", "↾"], "a": 0 },
+          { "q": "Mirror image of '↗' across a vertical mirror is:", "options": ["↖", "↘", "↗", "↙"], "a": 1 },
+          { "q": "Series of sides: 3, 4, 5, 6, ?. Next regular polygon is:", "options": ["Heptagon", "Hexagon", "Pentagon", "Octagon"], "a": 0 },
+          { "q": "Pattern grows by +2 dots each step: 1, 3, 5, 7, ?. Next:", "options": ["8", "9", "11", "13"], "a": 2 },
+          { "q": "Paper folding: a dot at top-left; fold vertically; where is dot?", "options": ["Top-left", "Top-right", "Bottom-left", "Bottom-right"], "a": 1 },
+          { "q": "Complete matrices logic: Row increases by +1 sides: triangle, square, pentagon, next:", "options": ["Hexagon", "Heptagon", "Octagon", "Triangle"], "a": 0 },
+          { "q": "Odd one out by symmetry:", "options": ["Circle", "Square", "Equilateral triangle", "Scalene triangle"], "a": 3 },
+          { "q": "Which two pieces form a square when combined?", "options": ["Two right-isosceles triangles", "Two scalene triangles", "Two circles", "Two pentagons"], "a": 0 },
+          { "q": "Cube unfolding: which net is valid?", "options": ["Six squares in a straight line", "Cross-shaped with center and four arms plus one", "Three-by-two rectangle", "Random hex"], "a": 1 },
+          { "q": "If ▲=3, ■=4, ●=0 (holes), what is ◆?", "options": ["1", "2", "3", "4"], "a": 1 },
+          { "q": "Sequence: ↺ ↻ ↺ ↻ ?. Next:", "options": ["↻", "↺", "↕", "↔"], "a": 0 },
+          { "q": "Complete proportional figure: tall rectangle → short wide rectangle; tall triangle → ?", "options": ["Short wide triangle", "Square", "Circle", "Tall rectangle"], "a": 0 },
+          { "q": "Which has rotational symmetry of order 2?", "options": ["Letter 'N'", "Letter 'S'", "Letter 'Z'", "Letter 'H'"], "a": 3 },
+          { "q": "Which transformation maps a square onto itself?", "options": ["90° rotation", "45° rotation", "Shear", "Reflection over diagonal"], "a": 3 },
+          { "q": "Tiling: Which shapes can tessellate alone?", "options": ["Regular pentagon", "Regular hexagon", "Circle", "Ellipse"], "a": 1 },
+          { "q": "Find next count of line segments in pattern: 2, 4, 6, 8, ?", "options": ["9", "10", "12", "14"], "a": 1 },
+          { "q": "If black squares alternate each row, missing square is:", "options": ["Black", "White", "Striped", "None"], "a": 0 },
+          { "q": "Which net folds into a pyramid with square base?", "options": ["Four triangles around a square", "Five triangles in a chain", "Square of triangles", "Three triangles and a circle"], "a": 0 }
+        ],
+        "Psychological Tests": [
+          { "q": "You prefer to make decisions based on:", "options": ["Careful analysis of facts", "Gut feeling", "Others’ opinions", "Random choice"], "a": 0 },
+          { "q": "When working in a team, you are most likely to:", "options": ["Lead and coordinate", "Follow instructions", "Avoid responsibility", "Work in isolation only"], "a": 0 },
+          { "q": "Under pressure, you usually:", "options": ["Prioritize tasks calmly", "Panic and stop", "Blame others", "Quit"], "a": 0 },
+          { "q": "Your approach to deadlines is:", "options": ["Plan ahead and deliver early", "Start late and rush", "Ignore them", "Ask others to do it"], "a": 0 },
+          { "q": "Ethical dilemma: A friend asks you to inflate numbers. You:", "options": ["Refuse and report if needed", "Agree to help", "Ignore the request", "Share data publicly"], "a": 0 },
+          { "q": "Feedback from seniors is:", "options": ["Valuable for growth", "Annoying", "Irrelevant", "Threatening"], "a": 0 },
+          { "q": "In unfamiliar situations you:", "options": ["Gather info and adapt", "Freeze", "Wait for orders only", "Avoid task"], "a": 0 },
+          { "q": "Your planning style is:", "options": ["Structured with milestones", "No plan", "Postpone indefinitely", "Let others plan"], "a": 0 },
+          { "q": "Conflict in a team is best handled by:", "options": ["Open discussion and mediation", "Ignoring it", "Taking sides emotionally", "Escalating hostility"], "a": 0 },
+          { "q": "Regarding integrity:", "options": ["Non-negotiable; follow rules and honesty", "Situational", "Optional if pressured", "Means keeping secrets"], "a": 0 },
+          { "q": "If you make a mistake, you:", "options": ["Own it and correct quickly", "Hide it", "Blame others", "Deny it"], "a": 0 },
+          { "q": "On multitasking, you prefer:", "options": ["Prioritize and sequence", "Do everything at once", "Avoid tasks", "Random switching"], "a": 0 },
+          { "q": "Leadership means:", "options": ["Influencing and enabling others", "Ordering people", "Self-promotion", "Avoiding accountability"], "a": 0 },
+          { "q": "Your communication style is:", "options": ["Clear and respectful", "Vague", "Confrontational", "Silent"], "a": 0 },
+          { "q": "On learning new skills, you:", "options": ["Proactively practice", "Avoid learning", "Wait until forced", "Assume you know it"], "a": 0 },
+          { "q": "Risk handling:", "options": ["Identify, evaluate, mitigate", "Ignore risk", "Rely on luck", "Transfer responsibility"], "a": 0 },
+          { "q": "Time management:", "options": ["Schedule, track, adjust", "Ad hoc", "Delay habitually", "Depend on others"], "a": 0 },
+          { "q": "Team diversity is:", "options": ["A strength that improves outcomes", "A weakness", "Neutral", "A distraction"], "a": 0 },
+          { "q": "Regarding instructions:", "options": ["Clarify and confirm understanding", "Assume and proceed", "Ignore and improvise", "Delegate upward"], "a": 0 },
+          { "q": "Your motivation is primarily:", "options": ["Purpose and achievement", "External pressure", "Avoiding work", "Competition only"], "a": 0 }
+        ]
+      }
+    };
+
+    async function loadQuestions() {
+      // Try loading a data file if it exists: data/<category>/<paper>.json
+      // 1) Prefer embedded dataset if available
+      if (EMBEDDED_DATASETS[category] && EMBEDDED_DATASETS[category][paper]) {
+        return normalizeQuestions(EMBEDDED_DATASETS[category][paper]);
+      }
+      // 2) Otherwise attempt to fetch from /data
+      const path = "data/" + encodeURIComponent(category) + "/" + encodeURIComponent(paper) + ".json";
+      try {
+        const res = await fetch(path, { cache: "no-store" });
+        if (res.ok) {
+          const json = await res.json();
+          if (Array.isArray(json) && json.length > 0) return normalizeQuestions(json);
+        }
+      } catch {}
+      // No dataset found: redirect to coming-soon
+      location.href = "coming-soon.html?c=" + encodeURIComponent(category) + "&p=" + encodeURIComponent(paper);
+      return [];
+    }
+    function normalizeQuestions(arr) {
+      return arr.map((q, i) => ({
+        q: String(q.q || q.question || "Question " + (i+1)),
+        options: Array.isArray(q.options) && q.options.length === 4 ? q.options.map(String) : ["A","B","C","D"],
+        a: Number.isInteger(q.a) ? q.a : 0,
+        explain: q.explain ? String(q.explain) : undefined
+      }));
+    }
+    function toFifty(arr) {
+      const out = arr.slice(0, 50);
+      let i = 0;
+      while (out.length < 50 && arr.length > 0) {
+        const item = arr[i % arr.length];
+        // clone to avoid reference issues
+        out.push({ q: item.q, options: item.options.slice(0, 4), a: item.a, explain: item.explain });
+        i++;
+      }
+      // simple shuffle
+      for (let j = out.length - 1; j > 0; j--) {
+        const k = Math.floor(Math.random() * (j + 1));
+        const tmp = out[j]; out[j] = out[k]; out[k] = tmp;
+      }
+      return out;
+    }
+
+    // State and UI (adapted from FA1 page)
+    function fmtTime(sec) {
+      const m = Math.floor(sec / 60);
+      const s = sec % 60;
+      return String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
+    }
+    function nowSec() { return Math.floor(Date.now() / 1000); }
+
+    const els = {
+      questionView: document.getElementById("questionView"),
+      prevBtn: document.getElementById("prevBtn"),
+      nextBtn: document.getElementById("nextBtn"),
+      finishBtn: document.getElementById("finishBtn"),
+      progressBar: document.getElementById("progressBar"),
+      progressText: document.getElementById("progressText"),
+      progressPct: document.getElementById("progressPct"),
+      reviewGrid: document.getElementById("reviewGrid"),
+      currentIndexPill: document.getElementById("currentIndexPill"),
+      answeredCount: document.getElementById("answeredCount"),
+      unansweredCount: document.getElementById("unansweredCount"),
+      remainingTimePill: document.getElementById("remainingTimePill"),
+      elapsedTimePill: document.getElementById("elapsedTimePill"),
+      estCompletePill: document.getElementById("estCompletePill"),
+      timeLeft: document.getElementById("timeLeft"),
+      timeElapsed: document.getElementById("timeElapsed"),
+      summaryPanel: document.getElementById("summaryPanel"),
+      scoreLine: document.getElementById("scoreLine"),
+      summaryElapsed: document.getElementById("summaryElapsed"),
+      detailedResults: document.getElementById("detailedResults"),
+    };
+
+    let QUESTIONS = [];
+    let state = null;
+    let timerId = null;
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        if (!parsed || typeof parsed !== "object") return null;
+        if (!Array.isArray(parsed.answers) || parsed.answers.length !== TOTAL_QUESTIONS) return null;
+        return parsed;
+      } catch { return null; }
+    }
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function startTimer() {
+      if (timerId) return;
+      timerId = setInterval(tick, 1000);
+      tick();
+    }
+    function stopTimer() {
+      if (timerId) { clearInterval(timerId); timerId = null; }
+    }
+    function tick() {
+      const used = Math.min(nowSec() - state.startedAt, TOTAL_SECONDS);
+      const left = Math.max(TOTAL_SECONDS - used, 0);
+      els.timeElapsed.textContent = fmtTime(used);
+      els.timeLeft.textContent = fmtTime(left);
+      els.remainingTimePill.textContent = fmtTime(left);
+      els.elapsedTimePill.textContent = fmtTime(used);
+      const answered = state.answers.filter(v => v !== null).length;
+      if (answered > 0) {
+        const pacePerQ = used / answered;
+        const etaSec = Math.max(0, Math.round(pacePerQ * (TOTAL_QUESTIONS - answered)));
+        els.estCompletePill.textContent = fmtTime(etaSec);
+      } else {
+        els.estCompletePill.textContent = "—";
+      }
+      if (left === 0) finishQuiz(true);
+    }
+
+    function updateProgress() {
+      const answered = state.answers.filter(v => v !== null).length;
+      const pct = Math.round((answered / TOTAL_QUESTIONS) * 100);
+      els.progressBar.style.width = pct + "%";
+      els.progressText.textContent = answered + "/" + TOTAL_QUESTIONS + " answered";
+      els.progressPct.textContent = pct + "%";
+      els.answeredCount.textContent = answered;
+      els.unansweredCount.textContent = (TOTAL_QUESTIONS - answered);
+    }
+    function updateReviewGrid() {
+      if (els.reviewGrid.childElementCount !== TOTAL_QUESTIONS) {
+        els.reviewGrid.innerHTML = "";
+        for (let i = 0; i < TOTAL_QUESTIONS; i++) {
+          const btn = document.createElement("div");
+          btn.className = "review-item";
+          btn.textContent = (i + 1);
+          btn.addEventListener("click", () => {
+            state.current = i; saveState(); render(); highlightReviewGrid();
+          });
+          els.reviewGrid.appendChild(btn);
+        }
+      }
+      for (let i = 0; i < TOTAL_QUESTIONS; i++) {
+        const btn = els.reviewGrid.children[i];
+        btn.classList.toggle("answered", state.answers[i] !== null);
+      }
+      highlightReviewGrid();
+    }
+    function highlightReviewGrid() {
+      for (let i = 0; i < TOTAL_QUESTIONS; i++) {
+        els.reviewGrid.children[i].classList.toggle("current", i === state.current);
+      }
+    }
+
+    function render() {
+      const q = QUESTIONS[state.current];
+      const answer = state.answers[state.current];
+      els.currentIndexPill.textContent = (state.current + 1) + " / " + TOTAL_QUESTIONS;
+      els.questionView.innerHTML = "";
+      const header = document.createElement("div");
+      header.className = "q-header";
+      const left = document.createElement("div");
+      left.innerHTML = '<div class="q-index">Question ' + (state.current + 1) + "</div>" +
+                       '<div class="q-text">' + q.q + "</div>";
+      header.appendChild(left);
+      els.questionView.appendChild(header);
+      const opts = document.createElement("div");
+      opts.className = "options";
+      q.options.forEach((text, idx) => {
+        const label = document.createElement("label");
+        label.className = "option" + (answer === idx ? " selected" : "");
+        const input = document.createElement("input");
+        input.type = "radio";
+        input.name = "opt";
+        input.checked = answer === idx;
+        input.addEventListener("change", () => {
+          state.answers[state.current] = idx; saveState(); updateProgress(); updateReviewGrid(); render();
+        });
+        const span = document.createElement("div");
+        span.textContent = text;
+        label.appendChild(input);
+        label.appendChild(span);
+        label.addEventListener("click", (e) => {
+          if (e.target.tagName.toLowerCase() !== "input") {
+            input.checked = true; input.dispatchEvent(new Event("change", { bubbles: true }));
+          }
+        });
+        opts.appendChild(label);
+      });
+      els.questionView.appendChild(opts);
+      els.prevBtn.disabled = state.current === 0;
+      els.nextBtn.disabled = state.current === TOTAL_QUESTIONS - 1;
+      if (state.submittedAt) showResults(); else document.getElementById("summaryPanel").classList.add("hidden");
+    }
+    function next() { if (state.current < TOTAL_QUESTIONS - 1) { state.current++; saveState(); render(); highlightReviewGrid(); } }
+    function prev() { if (state.current > 0) { state.current--; saveState(); render(); highlightReviewGrid(); } }
+    function finishQuiz(autoByTime = false) {
+      if (state.submittedAt) return;
+      state.submittedAt = nowSec(); saveState(); stopTimer(); showResults(autoByTime);
+    }
+    function showResults(autoByTime = false) {
+      let score = 0;
+      state.answers.forEach((ans, i) => { if (ans === QUESTIONS[i].a) score++; });
+      const pct = Math.round((score / TOTAL_QUESTIONS) * 100);
+      document.getElementById("scoreLine").textContent = "Your score: " + score + " / " + TOTAL_QUESTIONS + " (" + pct + "%)" + (autoByTime ? " • Time up" : "");
+      const elapsed = Math.min((state.submittedAt ?? nowSec()) - state.startedAt, TOTAL_SECONDS);
+      document.getElementById("summaryElapsed").textContent = fmtTime(elapsed);
+      const frag = document.createDocumentFragment();
+      for (let i = 0; i < TOTAL_QUESTIONS; i++) {
+        const q = QUESTIONS[i];
+        const chosen = state.answers[i];
+        const wrap = document.createElement("div");
+        wrap.style.margin = "12px 0";
+        const title = document.createElement("div");
+        title.innerHTML = "<strong>Q" + (i + 1) + ".</strong> " + q.q;
+        wrap.appendChild(title);
+        q.options.forEach((text, idx) => {
+          const row = document.createElement("div");
+          row.className = "option" + (idx === q.a ? " correct" : "") + (chosen === idx && chosen !== q.a ? " wrong" : "");
+          row.style.pointerEvents = "none";
+          const mark = document.createElement("div");
+          mark.textContent = (idx === q.a ? "✓ " : (chosen === idx ? "✗ " : "• "));
+          const t = document.createElement("div");
+          t.textContent = text;
+          row.appendChild(mark);
+          row.appendChild(t);
+          wrap.appendChild(row);
+        });
+        if (q.explain) {
+          const ex = document.createElement("div");
+          ex.className = "subtle";
+          ex.textContent = "Explanation: " + q.explain;
+          wrap.appendChild(ex);
+        }
+        const hr = document.createElement("div");
+        hr.style.height = "1px";
+        hr.style.background = "rgba(255,255,255,0.06)";
+        hr.style.marginTop = "8px";
+        wrap.appendChild(hr);
+        frag.appendChild(wrap);
+      }
+      els.detailedResults.innerHTML = "";
+      els.detailedResults.appendChild(frag);
+      document.getElementById("summaryPanel").classList.remove("hidden");
+    }
+
+    document.getElementById("nextBtn").addEventListener("click", next);
+    document.getElementById("prevBtn").addEventListener("click", prev);
+    document.getElementById("finishBtn").addEventListener("click", () => {
+      if (!confirm("Submit now? You won't be able to change answers after submitting.")) return;
+      finishQuiz(false);
+    });
+
+    (async function init() {
+      const loaded = await loadQuestions();
+      QUESTIONS = toFifty(loaded);
+      TOTAL_QUESTIONS = QUESTIONS.length || 50;
+      if (TOTAL_QUESTIONS <= 0) return;
+      state = loadState();
+      if (!state || !Array.isArray(state.answers) || state.answers.length !== TOTAL_QUESTIONS) {
+        state = { answers: Array(TOTAL_QUESTIONS).fill(null), current: 0, startedAt: nowSec(), pausedAt: null, submittedAt: null };
+      }
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      render(); updateProgress(); updateReviewGrid();
+      if (!state.submittedAt) { setTimeout(startTimer, 0); } else { showResults(); }
+    })();
+  </script>
+</body>
+<_html>
+
+
